@@ -5,6 +5,19 @@ con = sqlite3.connect("database/farematrix.db")
 
 cursor = con.cursor()
 
+def DeleteSummaryContents():
+    query = "DELETE FROM SingleJourneySummary"
+
+    cursor.execute(query)
+    con.commit()
+
+def ListAllTables():
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    print("Existing tables in the database:")
+    for table in tables:
+        print(table[0])
+
 def CreateSingleJourneyTables(con, cursor):
     cursor.execute(''' 
             CREATE TABLE Origin (
@@ -35,16 +48,18 @@ def CreateSingleJourneyTables(con, cursor):
 
 def CreateSingleSummary(con, cursor):
     cursor.execute(''' 
-            CREATE TABLE SingleJourneyFare (
+            CREATE TABLE SingleJourneySummary (
+                order_num INTEGER PRIMARY KEY AUTOINCREMENT,
                 fare_id INTEGER NOT NULL,
                 origin_id INTEGER NOT NULL,
                 destination_id INTEGER NOT NULL,
-                fare_price REAL NOT NULL,
                 FOREIGN KEY (origin_id) REFERENCES Origin(origin_id),
-                FOREIGN KEY (destination_id) REFERENCES Destination(destination_id)    
-                FOREIGN KEY (fare_price) REFERENCES SingleJourneyFare(fare_price)        
+                FOREIGN KEY (destination_id) REFERENCES Destination(destination_id),    
+                FOREIGN KEY (fare_id) REFERENCES SingleJourneyFare(fare_id)        
             )         
         ''')
+
+    con.commit()
 
 def InsertValues(con, cursor):
     
@@ -290,7 +305,6 @@ def OriginDropdown(parent):
 
     return locationDropdown
 
-
 def DestinationNames(parent):
     con = sqlite3.connect("database/farematrix.db")
     cursor = con.cursor()
@@ -333,7 +347,68 @@ def GetOriginID(originName):
     else:
         return None
 
+def GetFareID(farePrice, originID, destinationId):
+    con = sqlite3.connect("database/farematrix.db")
+    cursor = con.cursor()
+    query = "SELECT fare_id FROM SingleJourneyFare WHERE origin_id = ? AND destination_id = ?"
+    cursor.execute(query, (originID, destinationId))
 
+    result = cursor.fetchone()
+    con.close()
 
+    if result:
+        return result[0]
+    else:
+        return None
+
+def InsertSummary(fareID, originID, destinationID):
+    con = sqlite3.connect("database/farematrix.db")
+    cursor = con.cursor()
+    query = '''
+                INSERT INTO SingleJourneySummary (fare_id, origin_id, destination_id)
+                VALUES (?, ?, ?)
+        '''
+    cursor.execute(query, (fareID, originID, destinationID))
+    con.commit()
+    con.close()
+
+def GetRecentOrigin():
+    con = sqlite3.connect("database/farematrix.db")
+    cursor = con.cursor()
+    query = '''
+        SELECT origin_id
+        FROM SingleJourneySummary
+        ORDER BY order_num DESC
+        LIMIT 1;
+        '''
+    cursor.execute(query)
+    result = cursor.fetchone()
+    con.commit
+
+    con.close()
+
+    if result:
+        return result[0]
+    else:
+        return None
+
+def GetRecentDest():
+    con = sqlite3.connect("database/farematrix.db")
+    cursor = con.cursor()
+    query = '''
+        SELECT destination_id
+        FROM SingleJourneySummary
+        ORDER BY order_num DESC
+        LIMIT 1;
+        '''
+    cursor.execute(query)
+    result = cursor.fetchone()
+    con.commit()
+    con.close()
+
+    if result:
+        return result[0]
+    else:
+        return None
 
 con.close()
