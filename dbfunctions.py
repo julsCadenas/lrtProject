@@ -11,6 +11,11 @@ def DeleteSummaryContents():
     cursor.execute(query)
     con.commit()
 
+def ResetSequence():
+    query = "UPDATE sqlite_sequence SET seq = 0"
+    cursor.execute(query)
+    con.commit()
+
 def ListAllTables():
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
     tables = cursor.fetchall()
@@ -314,7 +319,7 @@ def DestinationNames(parent):
     destNames = [row[0] for row in cursor.fetchall()]
     
     cursor.close()
-    con.close
+    con.close()
     parent.destNames = destNames
 
 def GetFarePrice(originID, destinationID):
@@ -325,6 +330,7 @@ def GetFarePrice(originID, destinationID):
 
     result = cursor.fetchone()
     naResult = 'No Fare Available'
+    cursor.close()
     con.close()
 
     if result:
@@ -339,6 +345,7 @@ def GetOriginID(originName):
     cursor.execute(query,(originName,))
 
     result = cursor.fetchone()
+    cursor.close()
     con.close()
 
     if result:
@@ -354,6 +361,7 @@ def GetFareID(farePrice, originID, destinationId):
     cursor.execute(query, (originID, destinationId))
 
     result = cursor.fetchone()
+    cursor.close()
     con.close()
 
     if result:
@@ -361,15 +369,16 @@ def GetFareID(farePrice, originID, destinationId):
     else:
         return None
 
-def InsertSummary(fareID, originID, destinationID):
+def InsertSummary(fareID, originID, destinationID, totalFare):
     con = sqlite3.connect("database/farematrix.db")
     cursor = con.cursor()
     query = '''
-                INSERT INTO SingleJourneySummary (fare_id, origin_id, destination_id)
-                VALUES (?, ?, ?)
+                INSERT INTO SingleJourneySummary (fare_id, origin_id, destination_id, total_fare)
+                VALUES (?, ?, ?, ?)
         '''
-    cursor.execute(query, (fareID, originID, destinationID))
+    cursor.execute(query, (fareID, originID, destinationID, totalFare))
     con.commit()
+    cursor.close()
     con.close()
 
 def GetRecentOrigin():
@@ -383,11 +392,10 @@ def GetRecentOrigin():
         '''
     cursor.execute(query)
     result = cursor.fetchone()
-    con.commit
-
+    cursor.close()
     con.close()
-
     if result:
+        print(result)
         return result[0]
     else:
         return None
@@ -403,10 +411,11 @@ def GetRecentDest():
         '''
     cursor.execute(query)
     result = cursor.fetchone()
-    con.commit()
+    cursor.close()
     con.close()
 
     if result:
+        print(result)
         return result[0]
     else:
         return None
