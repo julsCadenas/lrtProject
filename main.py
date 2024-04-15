@@ -67,6 +67,7 @@ class SingleJourneyPage(CTkFrame):
         self.farePrice = 0
         self.fareID = 0
         self.totalFare = 0
+        self.pay = 0
 
         stationValues = {
             1: "Antipolo",
@@ -154,8 +155,8 @@ class SingleJourneyPage(CTkFrame):
         ticketTitle = CTkLabel(master=summaryFrame, text="Ticket #:", font=labelFont)
         ticketTitle.place(relx=0.139, rely=0.75, anchor="center")
 
-        ticketFrame = CTkFrame(master=summaryFrame, height=50, width=250, corner_radius=15, fg_color="#333333")
-        ticketFrame.place(relx=0.365, rely=0.75, anchor="center")
+        ticketFrame = CTkFrame(master=summaryFrame, height=50, width=200, corner_radius=15, fg_color="#333333")
+        ticketFrame.place(relx=0.34, rely=0.75, anchor="center")
 
         plusBtn = CTkButton(ticketFrame, font=labelFont, text="+", height=10, width=10, fg_color="#333333", hover_color="#2b2b2b")
         plusBtn.place(relx=0.9, rely=0.5, anchor="center")
@@ -170,14 +171,14 @@ class SingleJourneyPage(CTkFrame):
         def incrementTicket():
             self.currentTicketValue += 1
             updateTicketValue()
-            self.totalFare = totalFareCalc(self.farePrice)  # Recalculate total fare
+            self.totalFare = totalFareCalc(self.farePrice)
             totalCost.configure(text=f"Php {self.totalFare}0")
 
         def decrementTicket():
             if self.currentTicketValue > 1:
                 self.currentTicketValue -= 1
                 updateTicketValue()
-                self.totalFare = totalFareCalc(self.farePrice)  # Recalculate total fare
+                self.totalFare = totalFareCalc(self.farePrice)
                 totalCost.configure(text=f"Php {self.totalFare}0")
 
         def updateTicketValue():
@@ -189,7 +190,7 @@ class SingleJourneyPage(CTkFrame):
         totalTitle = CTkLabel(master=summaryFrame, text="Total Cost:", font=labelFont)
         totalTitle.place(relx=0.8, rely=0.3, anchor="center")
 
-        totalFrame = CTkFrame(master=summaryFrame, height=180, width=250, corner_radius=15, fg_color="#333333")
+        totalFrame = CTkFrame(master=summaryFrame, height=150, width=250, corner_radius=15, fg_color="#333333")
         totalFrame.place(relx=0.8, rely=0.5, anchor="center")
 
         totalFont = customtkinter.CTkFont(family="Century Gothic", size=32, weight="bold")
@@ -198,6 +199,7 @@ class SingleJourneyPage(CTkFrame):
 
         def totalFareCalc(farePrice):
             self.totalFare = farePrice * self.currentTicketValue
+            updateProceedButton(self)
             return self.totalFare
 
         # function for when you change the origin station
@@ -221,7 +223,6 @@ class SingleJourneyPage(CTkFrame):
             if self.farePrice is not None:
                 fareCost.configure(text=f"Php {self.farePrice}0")
                 priceLabel.configure(text=f"Php {self.farePrice}0")
-
             else:
                 fareCost.configure(text="No fare available")
 
@@ -301,6 +302,37 @@ class SingleJourneyPage(CTkFrame):
         fareCost = customtkinter.CTkLabel(costFrame, font=dropdownFont, text="")
         fareCost.place(relx=0.5, rely=0.5, anchor="center")
 
+        paymentTitle = CTkLabel(master=summaryFrame, text="Payment:", font=labelFont)
+        paymentTitle.place(relx=0.565, rely=0.75, anchor="center")
+
+        payFont = customtkinter.CTkFont(family="Century Gothic", size=20, weight="bold")
+        paymentFrame = CTkFrame(master=summaryFrame, height=50, width=250, corner_radius=15, fg_color="#333333")
+        paymentFrame.place(relx=0.8, rely=0.75, anchor="center")
+
+        plusBtn2 = CTkButton(paymentFrame, font=labelFont, text="+", height=10, width=10, fg_color="#333333", hover_color="#2b2b2b")
+        plusBtn2.place(relx=0.9, rely=0.5, anchor="center")
+
+        minusBtn2 = CTkButton(paymentFrame, font=labelFont, text="-", height=10, width=10, fg_color="#333333", hover_color="#2b2b2b")
+        minusBtn2.place(relx=0.1, rely=0.5, anchor="center")
+
+        self.pay = 0
+        payValue = CTkLabel(paymentFrame, font=labelFont, text="Php 5")
+        payValue.place(relx=0.5, rely=0.5, anchor="center")
+
+        def incrementPay():
+            self.pay += 5
+            payValue.configure(text=f"Php {self.pay}")
+            updateProceedButton(self)
+
+        def decrementPay():
+            if self.pay > 5:
+                self.pay -= 5
+                payValue.configure(text=f"Php {self.pay}")
+                updateProceedButton(self)
+
+        plusBtn2.configure(command=incrementPay)
+        minusBtn2.configure(command=decrementPay)
+
         # cancel button
         backBtn = CTkButton(master=mainFrame, text="Cancel", fg_color="#9966CC", hover_color="#A32CC4",
                             corner_radius=10, font=customFont, width=150, height=35,
@@ -308,7 +340,7 @@ class SingleJourneyPage(CTkFrame):
         backBtn.place(relx=0.37, rely=0.9, anchor="center")
 
         def onConfirm2(controller):
-            InsertSummary(self.fareID, self.originID, self.destinationId, self.totalFare)
+            InsertSummary(self.fareID, self.originID, self.destinationId, self.totalFare, self.pay)
             controller.showFrame(IndexPage)
             summaryFrame.place_forget()
             sliderFrame.place(relx=0.18, rely=0.5, anchor="center")
@@ -319,15 +351,19 @@ class SingleJourneyPage(CTkFrame):
                           command=lambda: onConfirm2(controller))
         confirmBtn2.place(relx=0.5, rely=0.9, anchor="center")
 
+        def updateProceedButton(self):
+            if self.pay < self.totalFare:
+                confirmBtn2.configure(state="disabled")
+            else:
+                confirmBtn2.configure(state="normal")
+
         def showSummary():
             summaryFrame.place(relx=0.5, rely=0.5, anchor="center")
 
         def onConfirm(controller):
-            # InsertSummary(self.fareID, self.originID, self.destinationId)
             mainFrame.place_forget()
             sliderFrame.place_forget()
             showSummary()
-            # controller.showFrame(SingleJourneySummary)
 
         # confirm button
         confirmBtn = CTkButton(master=mainFrame, text="Confirm", fg_color="#9966CC", hover_color="#A32CC4",
