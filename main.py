@@ -1,9 +1,9 @@
 import customtkinter
-import tkinter
+# import tkinter
 from customtkinter import *
 from tkinter import *
 from PIL import Image
-import sqlite3
+# import sqlite3
 # import dbfunctions
 from dbfunctions import OriginDropdown, DestinationNames, GetFarePrice, GetOriginID, GetFareID, InsertSummary, GetRecentOrigin, GetRecentDest
 
@@ -19,7 +19,7 @@ class PageFormat(CTk):
 
         self.frames = {}
 
-        for F in (IndexPage, SingleJourneyPage, SingleJourneySummary):
+        for F in (IndexPage, SingleJourneyPage):
             frame = F(self, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -66,6 +66,7 @@ class SingleJourneyPage(CTkFrame):
         self.destinationId = 0
         self.farePrice = 0
         self.fareID = 0
+        self.totalFare = 0
 
         stationValues = {
             1: "Antipolo",
@@ -85,6 +86,7 @@ class SingleJourneyPage(CTkFrame):
 
         self.configure(fg_color="#242424") #change frame background color
         customFont = customtkinter.CTkFont(family="Century Gothic", size=20, weight="bold")
+        labelFont = customtkinter.CTkFont(family="Century Gothic", size=32, weight="bold")
 
         # frame for the bulk of the contents
         mainFrame = CTkFrame(master=self, height=620, width=600, corner_radius=15)
@@ -114,15 +116,101 @@ class SingleJourneyPage(CTkFrame):
                                                      font=dropdownFont, justify="center")
         locationDropdown.place(relx=0.5, rely=0.32, anchor="center")
 
+        summaryFrame = CTkFrame(master=self, height=620, width=923, corner_radius=15, fg_color="#2b2b2b")
+        summaryFrame.place(relx=0.5, rely=0.5, anchor="center")
+        summaryFrame.place_forget()
+
+        titleFont = customtkinter.CTkFont(family="Century Gothic", size=48, weight="bold")
+        summaryTitleLabel = CTkLabel(summaryFrame, text="Confirm Your Trip", font=titleFont)
+        summaryTitleLabel.place(relx=0.5, rely=0.1, anchor="center")
+
+        originLabel = CTkLabel(summaryFrame, text="Origin:", font=labelFont)
+        originLabel.place(relx=0.12, rely=0.3, anchor="center")
+
+        destinationLabel = CTkLabel(summaryFrame, text="Destination:", font=labelFont)
+        destinationLabel.place(relx=0.164, rely=0.45, anchor="center")
+
+        priceTitleLabel = CTkLabel(summaryFrame, text="Price:", font=labelFont)
+        priceTitleLabel.place(relx=0.113, rely=0.6, anchor="center")
+
+        originFrame = CTkFrame(master=summaryFrame, height=50, width=250, corner_radius=15, fg_color="#333333")
+        originFrame.place(relx=0.33, rely=0.305, anchor="center")
+
+        originStationLabel = CTkLabel(originFrame, font=labelFont)
+        originStationLabel.place(relx=0.5, rely=0.5, anchor="center")
+
+        destinationFrame = CTkFrame(master=summaryFrame, height=50, width=250, corner_radius=15, fg_color="#333333")
+        destinationFrame.place(relx=0.415, rely=0.455, anchor="center")
+
+        destStationLabel = CTkLabel(destinationFrame, font=labelFont)
+        destStationLabel.place(relx=0.5, rely=0.5, anchor="center")
+
+        priceFrame = CTkFrame(master=summaryFrame, height=50, width=250, corner_radius=15, fg_color="#333333")
+        priceFrame.place(relx=0.315, rely=0.61, anchor="center")
+
+        priceLabel = CTkLabel(priceFrame, font=labelFont)
+        priceLabel.place(relx=0.5, rely=0.5, anchor="center")
+
+        ticketTitle = CTkLabel(master=summaryFrame, text="Ticket #:", font=labelFont)
+        ticketTitle.place(relx=0.139, rely=0.75, anchor="center")
+
+        ticketFrame = CTkFrame(master=summaryFrame, height=50, width=250, corner_radius=15, fg_color="#333333")
+        ticketFrame.place(relx=0.365, rely=0.75, anchor="center")
+
+        plusBtn = CTkButton(ticketFrame, font=labelFont, text="+", height=10, width=10, fg_color="#333333", hover_color="#2b2b2b")
+        plusBtn.place(relx=0.9, rely=0.5, anchor="center")
+
+        minusBtn = CTkButton(ticketFrame, font=labelFont, text="-", height=10, width=10, fg_color="#333333", hover_color="#2b2b2b")
+        minusBtn.place(relx=0.1, rely=0.5, anchor="center")
+
+        self.currentTicketValue = 1
+        ticketValue = CTkLabel(ticketFrame, font=labelFont, text=self.currentTicketValue)
+        ticketValue.place(relx=0.5, rely=0.5, anchor="center")
+
+        def incrementTicket():
+            self.currentTicketValue += 1
+            updateTicketValue()
+            self.totalFare = totalFareCalc(self.farePrice)  # Recalculate total fare
+            totalCost.configure(text=f"Php {self.totalFare}0")
+
+        def decrementTicket():
+            if self.currentTicketValue > 1:
+                self.currentTicketValue -= 1
+                updateTicketValue()
+                self.totalFare = totalFareCalc(self.farePrice)  # Recalculate total fare
+                totalCost.configure(text=f"Php {self.totalFare}0")
+
+        def updateTicketValue():
+            ticketValue.configure(text=self.currentTicketValue)
+
+        plusBtn.configure(command=incrementTicket)
+        minusBtn.configure(command=decrementTicket)
+
+        totalTitle = CTkLabel(master=summaryFrame, text="Total Cost:", font=labelFont)
+        totalTitle.place(relx=0.8, rely=0.3, anchor="center")
+
+        totalFrame = CTkFrame(master=summaryFrame, height=180, width=250, corner_radius=15, fg_color="#333333")
+        totalFrame.place(relx=0.8, rely=0.5, anchor="center")
+
+        totalFont = customtkinter.CTkFont(family="Century Gothic", size=32, weight="bold")
+        totalCost = CTkLabel(master=totalFrame, text="", font=totalFont)
+        totalCost.place(relx=0.5, rely=0.5, anchor="center")
+
+        def totalFareCalc(farePrice):
+            self.totalFare = farePrice * self.currentTicketValue
+            return self.totalFare
+
         # function for when you change the origin station
         def locationChange(event):
             originName = locationDropdown.get()
+            originStationLabel.configure(text=originName)
 
             self.originID = GetOriginID(originName)
             self.destinationId = int(slider.get())
 
-            self.farePrice = GetFarePrice(self.originID, self.destinationId)
+            destStationLabel.configure(text=self.destinationId)
 
+            self.farePrice = GetFarePrice(self.originID, self.destinationId)
             self.fareID = GetFareID(self.farePrice, self.originID, self.destinationId)
 
             print(f"Origin ID: {self.originID}")
@@ -132,8 +220,12 @@ class SingleJourneyPage(CTkFrame):
 
             if self.farePrice is not None:
                 fareCost.configure(text=f"Php {self.farePrice}0")
+                priceLabel.configure(text=f"Php {self.farePrice}0")
+
             else:
                 fareCost.configure(text="No fare available")
+
+            return self.destinationId
 
         locationDropdown.configure(command=locationChange)
         # function for the values of the slider (only for recto station)
@@ -142,12 +234,13 @@ class SingleJourneyPage(CTkFrame):
             destNames = controller.destNames[index]
             slideLabel.configure(text=destNames)
             originName = locationDropdown.get()
+            originStationLabel.configure(text=originName)
+            destStationLabel.configure(text=destNames)
 
             self.originID = GetOriginID(originName)
             self.destinationId = int(value)
 
             self.farePrice = GetFarePrice(self.originID, self.destinationId)
-
             self.fareID = GetFareID(self.farePrice, self.originID, self.destinationId)
 
             print(f"Origin ID: {self.originID}")
@@ -155,11 +248,13 @@ class SingleJourneyPage(CTkFrame):
             print(f"Fare ID: {self.fareID}")
             print(" ")
 
-
             if self.farePrice is not None:
                 fareCost.configure(text=f"Php {self.farePrice}0")
+                priceLabel.configure(text=f"Php {self.farePrice}0")
             else:
                 fareCost.configure(text="No fare available")
+
+            return self.destinationId
 
         # frame to put slider into
         sliderFrame = CTkFrame(master=self, height=620, width=270, corner_radius=15)
@@ -212,76 +307,33 @@ class SingleJourneyPage(CTkFrame):
                             command=lambda: controller.showFrame(IndexPage))
         backBtn.place(relx=0.37, rely=0.9, anchor="center")
 
+        def onConfirm2(controller):
+            InsertSummary(self.fareID, self.originID, self.destinationId, self.totalFare)
+            controller.showFrame(IndexPage)
+            summaryFrame.place_forget()
+            sliderFrame.place(relx=0.18, rely=0.5, anchor="center")
+            mainFrame.place(relx=0.665, rely=0.5, anchor="center")
+
+        confirmBtn2 = CTkButton(master=summaryFrame, text="Proceed", fg_color="#9966CC", hover_color="#A32CC4",
+                          corner_radius=10, font=customFont, width=200, height=40,
+                          command=lambda: onConfirm2(controller))
+        confirmBtn2.place(relx=0.5, rely=0.9, anchor="center")
+
+        def showSummary():
+            summaryFrame.place(relx=0.5, rely=0.5, anchor="center")
+
         def onConfirm(controller):
-            InsertSummary(self.fareID, self.originID, self.destinationId)
-            controller.showFrame(SingleJourneySummary)
+            # InsertSummary(self.fareID, self.originID, self.destinationId)
+            mainFrame.place_forget()
+            sliderFrame.place_forget()
+            showSummary()
+            # controller.showFrame(SingleJourneySummary)
 
         # confirm button
         confirmBtn = CTkButton(master=mainFrame, text="Confirm", fg_color="#9966CC", hover_color="#A32CC4",
                           corner_radius=10, font=customFont, width=150, height=35,
                           command=lambda: onConfirm(controller))
         confirmBtn.place(relx=0.64, rely=0.9, anchor="center")
-
-class SingleJourneySummary(SingleJourneyPage):
-    def __init__(self, parent, controller):
-        super().__init__(parent, controller)
-
-        # originID2 = self.originID
-        # destinationId2 = self.destinationId
-        # farePrice2 = self.farePrice
-
-        # Labels for station names
-        stationLabels = ["Recto", "Legarda", "Pureza", "V. Mapa", "J. Ruiz", "Gilmore", "Betty Go",
-            "Cubao", "Anonas", "Katipunan", "Santolan", "Marikina", "Antipolo"]
-
-        stationIndex = GetRecentOrigin() - 1
-        destinationIndex = GetRecentDest() - 1
-
-        # stationIndex = originID2 - 1
-        # destinationIndex = destinationId2 - 1
-
-        # originStation = stationLabels[stationIndex]
-        # destinationStation = stationLabels[destinationIndex]
-
-        if stationIndex & destinationIndex is not None:
-            originStation = stationLabels[stationIndex]
-            destinationStation = stationLabels[destinationIndex]
-        else:
-            originStation = "Unknown"
-            destinationStation = "Unknown"
-
-        self.configure(fg_color="#242424") #change frame background color
-        customFont = customtkinter.CTkFont(family="Century Gothic", size=32, weight="bold")
-
-        mainSummaryFrame = CTkFrame(master=self, height=620, width=900, corner_radius=15)
-        mainSummaryFrame.place(relx=0.51, rely=0.5, anchor="center")
-
-        titleFont = customtkinter.CTkFont(family="Century Gothic", size=48, weight="bold")
-        summaryTitleLabel = CTkLabel(mainSummaryFrame, text="Confirm Your Trip", font=titleFont)
-        summaryTitleLabel.place(relx=0.5, rely=0.1, anchor="center")
-
-        originLabel = CTkLabel(mainSummaryFrame, text="Origin:", font=customFont)
-        originLabel.place(relx=0.4, rely=0.3, anchor="center")
-
-        originFrame = CTkFrame(master=mainSummaryFrame, height=50, width=250, corner_radius=15)
-        originFrame.place(relx=0.61, rely=0.305, anchor="center")
-
-        originStationLabel = CTkLabel(originFrame, text=originStation, font=customFont)
-        originStationLabel.place(relx=0.5, rely=0.5, anchor="center")
-
-        destinationLabel = CTkLabel(mainSummaryFrame, text="Destination:", font=customFont)
-        destinationLabel.place(relx=0.4, rely=0.45, anchor="center")
-
-        destinationFrame = CTkFrame(master=mainSummaryFrame, height=50, width=250, corner_radius=15)
-        destinationFrame.place(relx=0.65, rely=0.455, anchor="center")
-
-        destStationLabel = CTkLabel(destinationFrame, text=destinationStation, font=customFont)
-        destStationLabel.place(relx=0.5, rely=0.5, anchor="center")
-
-        confirmBtn2 = CTkButton(master=mainSummaryFrame, text="Proceed", fg_color="#9966CC", hover_color="#A32CC4",
-                          corner_radius=10, font=customFont, width=200, height=40,
-                          command=lambda: controller.showFrame(IndexPage))
-        confirmBtn2.place(relx=0.5, rely=0.9, anchor="center")
 
 app = PageFormat()
 app.mainloop()
