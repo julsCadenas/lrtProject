@@ -369,14 +369,14 @@ def GetFareID(farePrice, originID, destinationId):
     else:
         return None
 
-def InsertSummary(fareID, originID, destinationID, totalFare):
+def InsertSummary(fareID, originID, destinationID, totalFare, pay):
     con = sqlite3.connect("database/farematrix.db")
     cursor = con.cursor()
     query = '''
-                INSERT INTO SingleJourneySummary (fare_id, origin_id, destination_id, total_fare)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO SingleJourneySummary (fare_id, origin_id, destination_id, total_fare, payment)
+                VALUES (?, ?, ?, ?, ?)
         '''
-    cursor.execute(query, (fareID, originID, destinationID, totalFare))
+    cursor.execute(query, (fareID, originID, destinationID, totalFare, pay))
     con.commit()
     cursor.close()
     con.close()
