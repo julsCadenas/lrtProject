@@ -6,13 +6,22 @@ from PIL import Image
 # import sqlite3
 # import dbfunctions
 from dbfunctions import OriginDropdown, DestinationNames, GetFarePrice, GetOriginID, GetFareID, InsertSummary, GetRecentOrigin, GetRecentDest
+from functions import changeWindow, calculateChange
 
 class PageFormat(CTk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        windowWidth = 1000
+        windowHeight = 700
+        screenWidth = 1920
+        screenHeight = 1080
+
+        xPosition = (screenWidth - windowWidth) // 2
+        yPosition = (screenHeight - windowHeight) // 2
+
+        self.geometry(f"{windowWidth}x{windowHeight}+{xPosition}+{yPosition}")
         self.resizable(False, False)
-        self.geometry("1000x700")
         self.title(" LRT-2")
         self.iconbitmap('images/lrticon.ico')
         customtkinter.set_appearance_mode("dark")
@@ -68,6 +77,7 @@ class SingleJourneyPage(CTkFrame):
         self.fareID = 0
         self.totalFare = 0
         self.pay = 0
+        self.payChange = 0
 
         stationValues = {
             1: "Antipolo",
@@ -200,6 +210,7 @@ class SingleJourneyPage(CTkFrame):
         def totalFareCalc(farePrice):
             self.totalFare = farePrice * self.currentTicketValue
             updateProceedButton(self)
+            self.payChange = calculateChange(self.pay, self.totalFare)
             return self.totalFare
 
         # function for when you change the origin station
@@ -322,12 +333,15 @@ class SingleJourneyPage(CTkFrame):
         def incrementPay():
             self.pay += 5
             payValue.configure(text=f"Php {self.pay}")
+            self.payChange = calculateChange(self.pay, self.totalFare)
             updateProceedButton(self)
+
 
         def decrementPay():
             if self.pay > 5:
                 self.pay -= 5
                 payValue.configure(text=f"Php {self.pay}")
+                self.payChange = calculateChange(self.pay, self.totalFare)
                 updateProceedButton(self)
 
         plusBtn2.configure(command=incrementPay)
@@ -345,6 +359,9 @@ class SingleJourneyPage(CTkFrame):
             summaryFrame.place_forget()
             sliderFrame.place(relx=0.18, rely=0.5, anchor="center")
             mainFrame.place(relx=0.665, rely=0.5, anchor="center")
+
+            if (self.pay > self.totalFare):
+                changeWindow(self, self.payChange)
 
         confirmBtn2 = CTkButton(master=summaryFrame, text="Proceed", fg_color="#9966CC", hover_color="#A32CC4",
                           corner_radius=10, font=customFont, width=200, height=40,
