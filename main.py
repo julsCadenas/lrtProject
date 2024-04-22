@@ -28,7 +28,7 @@ class PageFormat(CTk):
 
         self.frames = {}
 
-        for F in (IndexPage, SingleJourneyPage):
+        for F in (IndexPage, SingleJourneyPage, StoredValuePage):
             frame = F(self, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -64,8 +64,105 @@ class IndexPage(CTkFrame):
 
         # stored value button
         storedBtn = CTkButton(master=self, text="Stored Value Ticket", fg_color="#9966CC", hover_color="#A32CC4",
-                              corner_radius=15, font=customFont, width=300, height=40)
+                              corner_radius=15, font=customFont, width=300, height=40,
+                              command=lambda: controller.showFrame(StoredValuePage))
         storedBtn.place(relx=0.75, rely=0.56, anchor="center")
+
+class StoredValuePage(CTkFrame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+
+        self.pay = 0
+        self.pursePay = 15
+        self.totalPay = 0
+
+        self.configure(fg_color="#242424")  # change frame background color
+        customFont = customtkinter.CTkFont(family="Century Gothic", size=20, weight="bold")
+        labelFont = customtkinter.CTkFont(family="Century Gothic", size=32, weight="bold")
+
+        # frame for the bulk of the contents
+        mainFrame = CTkFrame(master=self, height=620, width=600, corner_radius=15)
+        mainFrame.place(relx=0.35, rely=0.5, anchor="center")
+
+        # single journey title
+        titleFont = customtkinter.CTkFont(family="Century Gothic", size=45, weight="bold")
+        titleLabel = CTkLabel(mainFrame, text="Stored Value Card", font=titleFont)
+        titleLabel.place(relx=0.5, rely=0.1, anchor="center")
+
+        paymentTitle = CTkLabel(master=mainFrame, text="Insert Cash:", font=labelFont)
+        paymentTitle.place(relx=0.5, rely=0.35, anchor="center")
+
+        payFont = customtkinter.CTkFont(family="Century Gothic", size=20, weight="bold")
+        paymentFrame = CTkFrame(master=mainFrame, height=100, width=280, corner_radius=15, fg_color="#333333")
+        paymentFrame.place(relx=0.5, rely=0.5, anchor="center")
+
+        plusBtn = CTkButton(paymentFrame, font=labelFont, text="+", height=10, width=10, fg_color="#333333", hover_color="#2b2b2b")
+        plusBtn.place(relx=0.9, rely=0.5, anchor="center")
+
+        minusBtn = CTkButton(paymentFrame, font=labelFont, text="-", height=10, width=10, fg_color="#333333", hover_color="#2b2b2b")
+        minusBtn.place(relx=0.1, rely=0.5, anchor="center")
+
+        payValue = CTkLabel(paymentFrame, font=labelFont, text="Php 0")
+        payValue.place(relx=0.5, rely=0.5, anchor="center")
+
+        # confirm button
+        confirmBtn = CTkButton(master=mainFrame, text="Confirm", fg_color="#9966CC", hover_color="#A32CC4",
+                          corner_radius=10, font=customFont, width=150, height=35,
+                          command=lambda: controller.showFrame(IndexPage))
+        confirmBtn.place(relx=0.64, rely=0.9, anchor="center")
+
+        # cancel button
+        backBtn = CTkButton(master=mainFrame, text="Cancel", fg_color="#9966CC", hover_color="#A32CC4",
+                            corner_radius=10, font=customFont, width=150, height=35,
+                            command=lambda: controller.showFrame(IndexPage))
+        backBtn.place(relx=0.37, rely=0.9, anchor="center")
+
+        feeFrame = CTkFrame(master=self, height=280, width=280, corner_radius=15)
+        feeFrame.place(relx=0.83, rely=0.257, anchor="center")
+
+        feeFont = customtkinter.CTkFont(family="Century Gothic", size=28, weight="bold")
+        purseValue = CTkLabel(master=feeFrame, text="Purse Value:", font=feeFont)
+        purseValue.place(relx=0.42, rely=0.2, anchor="center")
+
+        purse =  CTkLabel(master=feeFrame, text=f"Php {self.pursePay}.00", font=feeFont)
+        purse.place(relx=0.55, rely=0.37, anchor="center")
+
+        issueValue = CTkLabel(master=feeFrame, text="Issuance Fee:", font=feeFont)
+        issueValue.place(relx=0.45, rely=0.65, anchor="center")
+
+        thirty = CTkLabel(master=feeFrame, text="Php 30.00", font=feeFont)
+        thirty.place(relx=0.55, rely=0.8, anchor="center")
+
+        def incrementPay():
+            self.pay += 5
+            if self.pay > 45:
+                self.pursePay +=5
+            # self.totalPay = self.pay + self.pursePay
+            payValue.configure(text=f"Php {self.pay}")
+            purse.configure(text=f"Php {self.pursePay}.00")
+            # print(self.totalPay)
+
+        def decrementPay():
+            if self.pay > 0:
+                self.pay -= 5
+                # if self.pay > 45:
+                #     self.pursePay -= 5
+                # self.totalPay = self.pay + self.pursePay
+                # purse.configure(text=f"Php {self.pursePay}")
+                payValue.configure(text=f"Php {self.pay}.00")
+                # print(self.totalPay)
+
+        def decrementPurse():
+            if self.pay > 45:
+                self.pursePay -= 5
+            purse.configure(text=f"Php {self.pursePay}")
+
+        def decrement():
+            decrementPurse()
+            decrementPay()
+
+        plusBtn.configure(command=incrementPay)
+        minusBtn.configure(command=decrement)
 
 class SingleJourneyPage(CTkFrame):
     def __init__(self, parent, controller):
@@ -335,7 +432,6 @@ class SingleJourneyPage(CTkFrame):
             payValue.configure(text=f"Php {self.pay}")
             self.payChange = calculateChange(self.pay, self.totalFare)
             updateProceedButton(self)
-
 
         def decrementPay():
             if self.pay > 5:
