@@ -7,7 +7,11 @@ cursor = con.cursor()
 
 def DeleteSummaryContents():
     query = "DELETE FROM SingleJourneySummary"
+    cursor.execute(query)
+    con.commit()
 
+def DeleteStoredContents():
+    query = "DELETE FROM StoredValueSummary"
     cursor.execute(query)
     con.commit()
 
