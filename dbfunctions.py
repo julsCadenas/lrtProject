@@ -23,6 +23,17 @@ def ListAllTables():
     for table in tables:
         print(table[0])
 
+def CreateStoredValueTable(con, cursor):
+    cursor.execute('''
+        CREATE TABLE StoredValueSummary (
+            order_num INTEGER PRIMARY KEY AUTOINCREMENT,
+            purse_value INTEGER NOT NULL,
+            total_pay INTEGER NOT NULL
+        )
+    ''')
+
+    con.commit()
+
 def CreateSingleJourneyTables(con, cursor):
     cursor.execute(''' 
             CREATE TABLE Origin (
@@ -377,6 +388,18 @@ def InsertSummary(fareID, originID, destinationID, totalFare, pay):
                 VALUES (?, ?, ?, ?, ?)
         '''
     cursor.execute(query, (fareID, originID, destinationID, totalFare, pay))
+    con.commit()
+    cursor.close()
+    con.close()
+
+def InsertStoredSummary(purseValue, totalPay):
+    con = sqlite3.connect("database/farematrix.db")
+    cursor = con.cursor()
+    query = '''
+                INSERT INTO StoredValueSummary (purse_value, total_pay)
+                VALUES (?, ?)
+    '''
+    cursor.execute(query, (purseValue, totalPay))
     con.commit()
     cursor.close()
     con.close()
