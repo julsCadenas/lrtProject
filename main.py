@@ -5,8 +5,8 @@ from tkinter import *
 from PIL import Image
 # import sqlite3
 # import dbfunctions
-from dbfunctions import OriginDropdown, DestinationNames, GetFarePrice, GetOriginID, GetFareID, InsertSummary, GetRecentOrigin, GetRecentDest
-from functions import changeWindow, calculateChange
+from dbfunctions import OriginDropdown, DestinationNames, GetFarePrice, GetOriginID, GetFareID, InsertSummary, GetRecentOrigin, GetRecentDest, InsertStoredSummary
+from functions import changeWindow, calculateChange, summaryWindow
 
 class PageFormat(CTk):
     def __init__(self, *args, **kwargs):
@@ -74,7 +74,7 @@ class StoredValuePage(CTkFrame):
 
         self.pay = 0
         self.pursePay = 15
-        self.totalPay = 0
+        self.total = 45
 
         self.configure(fg_color="#242424")  # change frame background color
         customFont = customtkinter.CTkFont(family="Century Gothic", size=20, weight="bold")
@@ -108,7 +108,7 @@ class StoredValuePage(CTkFrame):
         # confirm button
         confirmBtn = CTkButton(master=mainFrame, text="Confirm", fg_color="#9966CC", hover_color="#A32CC4",
                           corner_radius=10, font=customFont, width=150, height=35,
-                          command=lambda: controller.showFrame(IndexPage))
+                          command=lambda: onConfirm(controller))
         confirmBtn.place(relx=0.64, rely=0.9, anchor="center")
 
         # cancel button
@@ -133,29 +133,46 @@ class StoredValuePage(CTkFrame):
         thirty = CTkLabel(master=feeFrame, text="Php 30.00", font=feeFont)
         thirty.place(relx=0.55, rely=0.8, anchor="center")
 
+        totalFrame = CTkFrame(master=self, height=200, width=280, corner_radius=15)
+        totalFrame.place(relx=0.83, rely=0.6275, anchor="center")
+
+        totalTitle = CTkLabel(master=totalFrame, text="Total Payment:", font=feeFont)
+        totalTitle.place(relx=0.5, rely=0.35, anchor="center")
+
+        totalLabel = CTkLabel(master=totalFrame, text=f"Php {self.total}.00", font=feeFont)
+        totalLabel.place(relx=0.5, rely=0.6, anchor="center")
+
+        noteFrame = CTkFrame(master=self, height=100, width=280, corner_radius=15)
+        noteFrame.place(relx=0.83, rely=0.87, anchor="center")
+
+        noteLabel = CTkLabel(master=noteFrame, text="No change given", font=feeFont)
+        noteLabel.place(relx=0.5, rely=0.5, anchor="center")
+
         def incrementPay():
             self.pay += 5
             if self.pay > 45:
                 self.pursePay +=5
-            # self.totalPay = self.pay + self.pursePay
-            payValue.configure(text=f"Php {self.pay}")
+                self.total = self.pursePay + 30
+            totalLabel.configure(text=f"Php {self.total}.00")
+            payValue.configure(text=f"Php {self.pay}.00")
             purse.configure(text=f"Php {self.pursePay}.00")
-            # print(self.totalPay)
+            updateProceedButton()
 
         def decrementPay():
             if self.pay > 0:
                 self.pay -= 5
-                # if self.pay > 45:
-                #     self.pursePay -= 5
-                # self.totalPay = self.pay + self.pursePay
-                # purse.configure(text=f"Php {self.pursePay}")
+                self.total = self.pursePay + 30
+                totalLabel.configure(text=f"Php {self.total}.00")
                 payValue.configure(text=f"Php {self.pay}.00")
-                # print(self.totalPay)
+                updateProceedButton()
 
         def decrementPurse():
             if self.pay > 45:
                 self.pursePay -= 5
-            purse.configure(text=f"Php {self.pursePay}")
+                self.total = self.pursePay + 30
+            totalLabel.configure(text=f"Php {self.total}.00")
+            purse.configure(text=f"Php {self.pursePay}.00")
+            updateProceedButton()
 
         def decrement():
             decrementPurse()
@@ -163,6 +180,19 @@ class StoredValuePage(CTkFrame):
 
         plusBtn.configure(command=incrementPay)
         minusBtn.configure(command=decrement)
+
+        def updateProceedButton():
+            if self.pay < 45:
+                confirmBtn.configure(state="disabled")
+            else:
+                confirmBtn.configure(state="normal")
+
+        def onConfirm(controller):
+            InsertStoredSummary(self.pursePay, self.total)
+            summaryWindow(self, self.pursePay, self.total)
+            controller.showFrame(IndexPage)
+
+
 
 class SingleJourneyPage(CTkFrame):
     def __init__(self, parent, controller):
@@ -218,7 +248,6 @@ class SingleJourneyPage(CTkFrame):
         DestinationNames(controller)
 
         # origin drop down list
-        # OriginDropdown(mainFrame)
         dropdownFont = customtkinter.CTkFont(family="Century Gothic", size=20, weight="bold")
         locationDropdown = customtkinter.CTkComboBox(mainFrame, values=stationLabels, width=240, height=30,
                                                      font=dropdownFont, justify="center")
