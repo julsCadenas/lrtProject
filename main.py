@@ -108,7 +108,7 @@ class StoredValuePage(CTkFrame):
         # confirm button
         confirmBtn = CTkButton(master=mainFrame, text="Confirm", fg_color="#9966CC", hover_color="#A32CC4",
                           corner_radius=10, font=customFont, width=150, height=35,
-                          command=lambda: onConfirm(controller))
+                          command=lambda: onConfirm())
         confirmBtn.place(relx=0.64, rely=0.9, anchor="center")
 
         # cancel button
@@ -148,6 +148,37 @@ class StoredValuePage(CTkFrame):
         noteLabel = CTkLabel(master=noteFrame, text="No change given", font=feeFont)
         noteLabel.place(relx=0.5, rely=0.5, anchor="center")
 
+        summaryFrame = CTkFrame(master=self, height=620, width=923, corner_radius=15, fg_color="#2b2b2b")
+        summaryFrame.place(relx=0.5, rely=0.5, anchor="center")
+        summaryFrame.place_forget()
+
+        titleFont = customtkinter.CTkFont(family="Century Gothic", size=48, weight="bold")
+        summaryTitleLabel = CTkLabel(summaryFrame, text="Confirm Your Ticket", font=titleFont)
+        summaryTitleLabel.place(relx=0.5, rely=0.1, anchor="center")
+
+        purseLabel = CTkLabel(master=summaryFrame, text="Purse Value:", font=labelFont)
+        purseLabel.place(relx=0.4, rely=0.38, anchor="center")
+
+        purseLabelFrame = CTkFrame(master=summaryFrame, height=80, width=250, corner_radius=15, fg_color="#333333")
+        purseLabelFrame.place(relx=0.655, rely=0.38, anchor="center")
+
+        purseValueLabel = CTkLabel(master=purseLabelFrame, text=f"Php {self.pursePay}.00", font=labelFont)
+        purseValueLabel.place(relx=0.5, rely=0.5, anchor="center")
+
+        totalPayLabel = CTkLabel(master=summaryFrame, text="Total Payment:", font=labelFont)
+        totalPayLabel.place(relx=0.37, rely=0.6, anchor="center")
+
+        totalPayLabelFrame = CTkFrame(master=summaryFrame, height=80, width=250, corner_radius=15, fg_color="#333333")
+        totalPayLabelFrame.place(relx=0.65, rely=0.6, anchor="center")
+
+        totalPayLabel = CTkLabel(master=totalPayLabelFrame, text=f"Php {self.total}.00", font=labelFont)
+        totalPayLabel.place(relx=0.5, rely=0.5, anchor="center")
+
+        confirmBtn2 = CTkButton(master=summaryFrame, text="Proceed", fg_color="#9966CC", hover_color="#A32CC4",
+                          corner_radius=10, font=customFont, width=200, height=40,
+                            command=lambda: onConfirm2(controller))
+        confirmBtn2.place(relx=0.5, rely=0.9, anchor="center")
+
         def incrementPay():
             self.pay += 5
             if self.pay > 45:
@@ -156,6 +187,8 @@ class StoredValuePage(CTkFrame):
             totalLabel.configure(text=f"Php {self.total}.00")
             payValue.configure(text=f"Php {self.pay}.00")
             purse.configure(text=f"Php {self.pursePay}.00")
+            purseValueLabel.configure(text=f"Php {self.pursePay}.00")
+            totalPayLabel.configure(text=f"Php {self.total}.00")
             updateProceedButton()
 
         def decrementPay():
@@ -164,6 +197,8 @@ class StoredValuePage(CTkFrame):
                 self.total = self.pursePay + 30
                 totalLabel.configure(text=f"Php {self.total}.00")
                 payValue.configure(text=f"Php {self.pay}.00")
+                purseValueLabel.configure(text=f"Php {self.pursePay}.00")
+                totalPayLabel.configure(text=f"Php {self.total}.00")
                 updateProceedButton()
 
         def decrementPurse():
@@ -172,6 +207,8 @@ class StoredValuePage(CTkFrame):
                 self.total = self.pursePay + 30
             totalLabel.configure(text=f"Php {self.total}.00")
             purse.configure(text=f"Php {self.pursePay}.00")
+            purseValueLabel.configure(text=f"Php {self.pursePay}.00")
+            totalPayLabel.configure(text=f"Php {self.total}.00")
             updateProceedButton()
 
         def decrement():
@@ -187,12 +224,24 @@ class StoredValuePage(CTkFrame):
             else:
                 confirmBtn.configure(state="normal")
 
-        def onConfirm(controller):
+        def onConfirm():
+            mainFrame.place_forget()
+            totalFrame.place_forget()
+            paymentFrame.place_forget()
+            noteFrame.place_forget()
+            feeFrame.place_forget()
+            summaryFrame.place(relx=0.505, rely=0.5, anchor="center")
+
+        def onConfirm2(controller):
+            summaryFrame.place_forget()
+            mainFrame.place(relx=0.35, rely=0.5, anchor="center")
+            paymentFrame.place(relx=0.5, rely=0.5, anchor="center")
+            feeFrame.place(relx=0.83, rely=0.257, anchor="center")
+            totalFrame.place(relx=0.83, rely=0.6275, anchor="center")
+            noteFrame.place(relx=0.83, rely=0.87, anchor="center")
             InsertStoredSummary(self.pursePay, self.total)
             summaryWindow(self, self.pursePay, self.total)
             controller.showFrame(IndexPage)
-
-
 
 class SingleJourneyPage(CTkFrame):
     def __init__(self, parent, controller):
